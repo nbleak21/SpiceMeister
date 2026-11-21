@@ -1,0 +1,31 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "ollama/gemma-agent",
+  "small_model": "ollama/gemma-agent",
+  "autoupdate": false,
+  "share": "disabled",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": { "baseURL": "http://127.0.0.1:11434/v1" },
+      "models": {
+        "gemma-agent": {
+          "name": "Gemma (256K ctx)",
+          "tool_call": true,
+          "limit": { "context": 262144, "output": 8192 }
+        }
+      }
+    }
+  },
+  "mcp": {
+    "spicemeister": {
+      "type": "local",
+      "command": ["smeister", "mcp"],
+      "enabled": true,
+      "environment": {
+        "NGSPICE_BIN": "/opt/homebrew/bin/ngspice"
+      }
+    }
+  }
+}

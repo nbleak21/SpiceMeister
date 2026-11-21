@@ -1,0 +1,9 @@
+* PSpice behavioral macromodel (SpiceMeister test fixture)
+.SUBCKT PSAMP INP INN OUT PARAMS: GAIN=1e5 VSAT=12
+E_gain g 0 VALUE={LIMIT(GAIN*V(INP,INN),-VSAT,VSAT)}
+R_out g OUT 100
+G_nl 0 OUT VALUE={PWRS(V(g),2)*1u}
+E_tab t 0 TABLE {V(g)} = (-1,-1)(0,0)(1,1)
+R_t t 0 1k
+.FUNC softclip(x) {LIMIT(x,-1,1)}
+.ENDS PSAMP

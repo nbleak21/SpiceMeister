@@ -1,0 +1,19 @@
+{
+  "_comment": "Model type/level normalisation. 'type_alias' rewrites a .model type token. 'level_map' remaps a LEVEL= value per device class to the nearest LTspice/ngspice built-in level. Remaps are ALWAYS reported as warnings because BSIM parameter sets are not guaranteed identical across tools -- a level remap is a starting point to verify, not a certified equivalence.",
+  "type_alias": {
+    "vdmos": "VDMOS",
+    "npn": "NPN",
+    "pnp": "PNP"
+  },
+  "level_map": {
+    "nmos": {"49": "8", "53": "14", "54": "14"},
+    "pmos": {"49": "8", "53": "14", "54": "14"}
+  },
+  "level_names": {
+    "8": "BSIM3v3 (ngspice/LTspice level 8)",
+    "14": "BSIM4 (ngspice/LTspice level 14)",
+    "49": "HSPICE BSIM3 (level 49)",
+    "53": "HSPICE BSIM4 (level 53)",
+    "54": "HSPICE BSIM4 (level 54)"
+  }
+}

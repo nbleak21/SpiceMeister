@@ -1,0 +1,7 @@
+// Spectre fragment (structural best-effort)
+simulator lang=spectre
+parameters rload=1k
+subckt sdiv (a b)
+  ra (a m) resistor r=rload
+  rb (m b) resistor r=rload
+ends sdiv

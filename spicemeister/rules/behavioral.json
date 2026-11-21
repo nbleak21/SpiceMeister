@@ -1,0 +1,9 @@
+{
+  "_comment": "Policy for normalising E/G/B behavioural & controlled sources. The structural rewrite lives in code (transforms/behavioral_sources.py); this file carries the tunable policy.",
+  "emit_as_bsource": true,
+  "_emit_as_bsource_why": "Convert E(VALUE/VOL)/G(VALUE/CUR)/TABLE sources to B-sources (Bxxx n+ n- V=/I={...}); B-sources are the native behavioural element in both ngspice and LTspice and avoid dialect-specific VALUE= quirks.",
+  "keep_linear_eg": true,
+  "_keep_linear_eg_why": "Linear VCVS/VCCS (E/G out+ out- in+ in- gain) are portable as-is; leave them unchanged.",
+  "passthrough_kinds": ["poly", "laplace", "freq", "cheby"],
+  "warn_kinds": ["laplace", "freq", "cheby"]
+}

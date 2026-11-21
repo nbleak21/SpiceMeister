@@ -1,0 +1,13 @@
+.DS_Store
+*.bak.*
+*.spicemeister.backup*
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+build/
+dist/
+*.egg-info/
+examples/_translated/

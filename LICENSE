@@ -1,0 +1,12 @@
+SpiceMeister — license to be chosen by the repository owner.
+
+This file is a placeholder. Pick a license before publishing (MIT or Apache-2.0
+are common choices for developer tooling) and replace this text with it.
+
+Intellectual-property note
+---------------------------
+SpiceMeister translates SPICE models you have the right to use. It DETECTS and
+REPORTS vendor encryption (`.PROTECT`, encrypted libraries, compiled Verilog-A /
+OSDI); it does NOT circumvent it. The REA bridge is intended for characterising
+binary model containers you are authorised to analyse for interoperability.
+Respect the license terms of any vendor model you translate.

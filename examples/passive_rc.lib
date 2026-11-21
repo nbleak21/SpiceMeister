@@ -1,0 +1,6 @@
+* ngspice-native passive divider (for round-trip validation)
+.SUBCKT RCDIV A B PARAMS: R1=1k R2=2k
+Ra A m {R1}
+Rb m B {R2}
+Rc m 0 {R1*3}
+.ENDS RCDIV

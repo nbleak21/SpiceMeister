@@ -1,0 +1,32 @@
+{
+  "_comment": "Vendor-specific function -> LTspice/ngspice-common form. 'rename' changes the call name; 'template' expands with $0,$1,... argument placeholders (each wrapped in parentheses before re-parsing, so precedence is preserved). Functions not listed here pass through unchanged. Add a vendor function by adding one entry here -- no code change.",
+  "pwrs": {
+    "template": "sgn($0)*abs($0)**$1",
+    "why": "PSpice PWRS(x,y) is signed power sgn(x)*|x|^y (PSpice/OrCAD A/D Reference). NOTE: ngspice's psa compat mode computes pwrs() with the OPPOSITE sign for negative x, so `smeister validate` can report a spurious FAIL on PWRS models with negative arguments — the translation here follows the authoritative PSpice definition, not ngspice's emulation."
+  },
+  "pwr": {
+    "template": "abs($0)**$1",
+    "why": "PSpice PWR(x,y) is |x|^y (PSpice/OrCAD A/D Reference). NOTE: ngspice's psa compat mode computes pwr() as signed pow(x,y) for negative x, so validation against psa can spuriously diverge; the translation follows the authoritative PSpice definition."
+  },
+  "stp": {
+    "rename": "u",
+    "why": "PSpice STP(x) unit step == ngspice/LTspice u(x)"
+  },
+  "pow": {
+    "template": "$0**$1",
+    "why": "HSPICE pow(x,y) -> portable x**y"
+  },
+  "limit": {
+    "template": "max($1,min($2,$0))",
+    "why": "PSpice/LTspice LIMIT(x,lo,hi) clamp -> max/min, which is unambiguous in every ngspice mode (bare-ngspice limit() is not a 3-arg clamp) and in LTspice"
+  },
+  "db": {
+    "template": "20*log10(abs($0))",
+    "why": "HSPICE db(x) in decibels"
+  },
+  "if": {
+    "template": "($0) ? ($1) : ($2)",
+    "targets": ["ngspice"],
+    "why": "native ngspice B-sources reject if() ('no such function if'); the ?: ternary is equivalent and valid in native AND ltpsa ngspice. The LTspice profile keeps if(), which LTspice supports and which verifies under ngspice ltpsa."
+  }
+}

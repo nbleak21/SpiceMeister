@@ -1,0 +1,4 @@
+* PSpice behavioral buffer (benchable under psa and ltpsa)
+.SUBCKT PBUF INP OUT PARAMS: G=10 VMAX=5
+E1 OUT 0 VALUE={LIMIT(G*V(INP),-VMAX,VMAX)}
+.ENDS PBUF

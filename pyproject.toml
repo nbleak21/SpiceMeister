@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spicemeister"
+version = "0.1.0"
+description = "Translate vendor SPICE models (PSpice/HSPICE/Spectre) to LTspice-compatible form, verified through ngspice."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "see LICENSE" }
+keywords = ["spice", "ltspice", "ngspice", "pspice", "hspice", "spectre", "eda", "simulation"]
+
+# Core is intentionally zero-dependency (standard library only).
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+smeister = "spicemeister.cli:main"
+spicemeister = "spicemeister.cli:main"
+
+[tool.setuptools]
+packages = [
+  "spicemeister",
+  "spicemeister.core",
+  "spicemeister.readers",
+  "spicemeister.transforms",
+  "spicemeister.writers",
+  "spicemeister.validate",
+  "spicemeister.opaque",
+  "spicemeister.mcp",
+]
+
+[tool.setuptools.package-data]
+spicemeister = ["rules/*.json"]
