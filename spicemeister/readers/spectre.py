@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Spectre (Cadence) reader — structural best-effort (v0.1 partial).
 
 Spectre's native language is not SPICE. This reader performs a conservative,

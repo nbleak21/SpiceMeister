@@ -10,8 +10,7 @@ Some vendor models ship as **binary containers** rather than text SPICE —
 encrypted libraries, firmware-embedded model tables, compiled OSDI modules,
 packaged archives. SpiceMeister cannot translate those as text, but when you are
 **authorised to analyse the container for interoperability**, it bridges to
-[REA](https://github.com/morluto/rea) (already set up in `~/Documents/github/REA`)
-to characterise it.
+[REA](https://github.com/morluto/rea) to characterise it.
 
 It does **not** defeat vendor encryption. It reports structure and recovers any
 plain-text model cards embedded in the container.
@@ -48,9 +47,9 @@ or via MCP: the `bridge_opaque_model_to_rea` tool (`{"path": "…"}`).
 SpiceMeister is built in REA's toolkit style and *consumes* REA as a service:
 REA supplies the reverse-engineering primitives (entropy, strings, extraction,
 firmware); SpiceMeister adds the SPICE-aware layer (marker scan, feeding
-recovered text back into the translation pipeline). The two repos are siblings
-under `~/Documents/github/` and share the install idioms (`install.sh` with a
-backup-then-symlink `link()`, an isolated opencode home, an `mcp.*` entry).
+recovered text back into the translation pipeline). SpiceMeister reuses REA's
+install idioms (`install.sh` with a backup-then-symlink `link()`, an isolated
+opencode home, an `mcp.*` entry).
 
 ## Sources
 

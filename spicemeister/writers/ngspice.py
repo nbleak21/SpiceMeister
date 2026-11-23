@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """ngspice-native output profile: uppercase directives + ``PARAMS:``.
 
 Matches the pcb-stack stdlib house style (``.SUBCKT``/``.MODEL``/``.ENDS`` with

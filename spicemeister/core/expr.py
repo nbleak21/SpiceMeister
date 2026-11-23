@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """SPICE expression parser and AST.
 
 Parses the arithmetic/behavioral expression grammar shared by PSpice, HSPICE,

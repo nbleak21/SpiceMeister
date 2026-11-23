@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Node-name legalisation (conservative).
 
 Strips Spectre-style global-net ``!`` suffixes consistently at the IR level

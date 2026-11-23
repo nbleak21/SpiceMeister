@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Transform pipeline: pure IR -> IR passes driven by ``rules/*.json``.
 
 Each pass takes ``(netlist, rules)`` and mutates the netlist in place, logging

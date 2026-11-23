@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Bridge to the REA toolkit for opaque *binary* model containers.
 
 SpiceMeister drives REA's MCP server (``rea mcp``) over stdio JSON-RPC to

@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Round-trip validation through ngspice.
 
 Checks whether a translation preserves behaviour by building an operating-point

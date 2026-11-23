@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Detect encrypted / protected / opaque model content.
 
 SpiceMeister **detects and reports** vendor encryption; it does not attempt to

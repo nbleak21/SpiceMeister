@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """PSpice / OrCAD reader.
 
 PSpice shares the base grammar (brace-delimited expressions, ``.func``,

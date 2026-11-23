@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Model type-alias and LEVEL normalisation (driven by ``rules/models.json``).
 
 A LEVEL remap is always reported as a warning: BSIM parameter *sets* are not

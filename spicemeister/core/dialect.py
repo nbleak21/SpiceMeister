@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Heuristic SPICE-dialect detection.
 
 Scores a model/netlist against weighted marker patterns and returns the most

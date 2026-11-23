@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Behavioural / controlled-source normalisation.
 
 Decides the LTspice/ngspice target form for parsed E/G/B sources and records

@@ -8,8 +8,18 @@ version = "0.1.0"
 description = "Translate vendor SPICE models (PSpice/HSPICE/Spectre) to LTspice-compatible form, verified through ngspice."
 readme = "README.md"
 requires-python = ">=3.8"
-license = { text = "see LICENSE" }
+license = { text = "Apache-2.0" }
+authors = [{ name = "Nick L" }]
 keywords = ["spice", "ltspice", "ngspice", "pspice", "hspice", "spectre", "eda", "simulation"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: Apache Software License",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
 
 # Core is intentionally zero-dependency (standard library only).
 dependencies = []
@@ -20,6 +30,11 @@ dev = ["pytest"]
 [project.scripts]
 smeister = "spicemeister.cli:main"
 spicemeister = "spicemeister.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/nbleak21/SpiceMeister"
+Repository = "https://github.com/nbleak21/SpiceMeister"
+Issues = "https://github.com/nbleak21/SpiceMeister/issues"
 
 [tool.setuptools]
 packages = [

@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Emit a ready-to-paste Zener ``SpiceModel(...)`` block for pcb-stack.
 
 Given a translated ``.subckt``, produce the ``spice_model=SpiceModel(...)``

@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Normalise expression delimiters.
 
 Readers already strip the outer ``{...}`` / ``'...'`` wrapper, so IR

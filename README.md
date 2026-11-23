@@ -91,13 +91,15 @@ This codebase was adversarially reviewed by three independent agents (translatio
 ```bash
 brew install ngspice            # validation backend
 # optional: npm install -g rea-agents --allow-scripts=frida   # REA bridge
-git clone <this repo> ~/Documents/github/SpiceMeister
-cd ~/Documents/github/SpiceMeister
+git clone https://github.com/nbleak21/SpiceMeister.git
+cd SpiceMeister
 python -m unittest discover -s tests          # 40 tests
 scripts/install.sh
 ```
 
 ## pcb-stack integration
+
+> SpiceMeister is fully standalone. This section applies only if you also use **pcb-stack**, a separate PCB/simulation toolchain — skip it otherwise.
 
 Output is consumed by `pcb sim` via a Zener `SpiceModel("<file>", "<SUBCKT>", nets=[...], args={...})`. `--emit-zener` prints a ready-to-paste block with `nets` in exact `.subckt` terminal order and every `PARAMS:` entry in `args` (pcb-stack applies no defaults). Translated models belong at `components/<Part>/spice/<Part>.lib`; the `--profile ngspice` output matches the stdlib's native `.SUBCKT` house style and loads without a `.spiceinit`/`ngbehavior` setting. See [`docs/`](docs/).
 

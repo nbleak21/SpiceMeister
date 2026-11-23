@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """SpiceMeister command-line interface.
 
 Subcommands: detect, translate, validate, inspect, scan, batch.

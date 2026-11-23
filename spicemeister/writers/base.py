@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Serialise a :class:`Netlist` to LTspice / ngspice text.
 
 A single rendering engine parameterised by a small :class:`Profile` (keyword

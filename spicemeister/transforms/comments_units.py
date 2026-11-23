@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Unit / glyph normalisation.
 
 Converts the Unicode micro sign ``µ`` (and ``μ``) to ASCII ``u`` throughout

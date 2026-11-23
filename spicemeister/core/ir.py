@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Intermediate representation for SPICE netlists / model libraries.
 
 Readers produce a :class:`Netlist` of typed cards; transforms rewrite it in

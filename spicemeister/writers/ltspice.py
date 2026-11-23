@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """LTspice output profile (default): lowercase directives, portable syntax."""
 
 from __future__ import annotations

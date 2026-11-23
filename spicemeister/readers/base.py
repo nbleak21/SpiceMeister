@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Base SPICE reader: folded logical lines -> :class:`Netlist` IR.
 
 Handles the grammar shared by SPICE3 / ngspice / PSpice / HSPICE / LTspice:

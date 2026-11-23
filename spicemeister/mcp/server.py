@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """SpiceMeister MCP server — stdio JSON-RPC 2.0, zero dependencies.
 
 Exposes the translation toolkit to coding agents (Claude Code, opencode) the

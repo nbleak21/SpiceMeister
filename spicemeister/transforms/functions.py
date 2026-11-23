@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """Function remapping pass (AST rewrite driven by ``rules/functions.json``).
 
 Walks every expression's AST and replaces vendor-specific function calls with

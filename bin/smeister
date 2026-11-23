@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """SpiceMeister CLI launcher (symlink-safe).
 
 Resolves the repo root from this script's real path so the package is importable

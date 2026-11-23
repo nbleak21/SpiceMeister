@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """SpiceMeister test suite (stdlib unittest; ngspice tests self-gate).
 
 Run:  python -m unittest discover -s tests   |   python -m pytest tests

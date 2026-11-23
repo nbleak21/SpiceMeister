@@ -22,10 +22,7 @@
     "spicemeister": {
       "type": "local",
       "command": ["smeister", "mcp"],
-      "enabled": true,
-      "environment": {
-        "NGSPICE_BIN": "/opt/homebrew/bin/ngspice"
-      }
+      "enabled": true
     }
   }
 }

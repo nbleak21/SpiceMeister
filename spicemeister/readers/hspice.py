@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """HSPICE / Synopsys reader.
 
 Key HSPICE traits, all handled by the base pipeline:

@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """SPICE-aware lexing: physical lines -> folded logical lines.
 
 Responsibilities:

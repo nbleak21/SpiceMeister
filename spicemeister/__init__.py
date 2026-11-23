@@ -1,3 +1,5 @@
+# Copyright 2026 Nick L
+# SPDX-License-Identifier: Apache-2.0
 """SpiceMeister — translate vendor SPICE models to LTspice-compatible models.
 
 A parse -> IR -> transform -> emit -> verify pipeline for converting PSpice,
