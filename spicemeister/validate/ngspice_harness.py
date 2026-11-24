@@ -31,6 +31,12 @@ equivalent at this bias":
                       equivalence was established. **Not** a pass.
 * ``error``         — the translation failed to simulate.
 * ``skipped``       — ngspice unavailable.
+
+Files with no ``.subckt`` but bare semiconductor ``.model`` cards (D, NPN/PNP,
+NMOS/PMOS, NJF/PJF, VDMOS) are benched by instantiating each model in a
+generated fixture at several bias points and comparing DC terminal currents
+plus small-signal AC currents (so capacitance/transit-time params are checked);
+see ``_validate_models``. Other model types still get only a load check.
 """
 
 from __future__ import annotations
@@ -80,6 +86,7 @@ class RunResult:
 class ValidationResult:
     status: str                       # pass|fail|inconclusive|not-verified|error|skipped
     subckt: str = ""
+    models: List[str] = field(default_factory=list)   # bare .model cards benched
     mode_source: str = ""
     mode_translated: str = ""
     max_abs: float = 0.0
@@ -218,6 +225,256 @@ def _unit_floor(name: str) -> float:
     return _FLOOR_I if name.startswith("i(") else _FLOOR_V
 
 
+# --------------------------------------------------------------------------- #
+# Bare .model validation
+# --------------------------------------------------------------------------- #
+# A file holding only `.model` cards (the usual shape of a vendor diode or
+# transistor model) has no .subckt to bench. For the common semiconductor
+# primitives we instantiate the model in a generated fixture and compare the
+# source against the translation at several bias points, each as an isolated
+# circuit in ONE deck:
+#   * DC operating point: every terminal current (static params: IS, N, RS, BV,
+#     BF, VTO, ...).
+#   * Small-signal AC at _AC_FREQ on the control terminal: real AND imaginary
+#     terminal currents, so charge-storage params (CJO, TT, CJE, CGSO, ...) that
+#     never show up at DC are compared too.
+# Terminal currents go through _RSERIES so a forward-biased junction or a
+# breakdown bias settles at a finite, material current.
+
+_AC_FREQ = "10meg"
+_RSERIES = 1000.0
+
+# mtype -> (instance letter, terminal names, index of the AC-driven terminal)
+_PRIMITIVES = {
+    "D": ("D", ["a", "c"], 0),
+    "NPN": ("Q", ["c", "b", "e"], 1),
+    "PNP": ("Q", ["c", "b", "e"], 1),
+    "NMOS": ("M", ["d", "g", "s", "b"], 1),
+    "PMOS": ("M", ["d", "g", "s", "b"], 1),
+    "NJF": ("J", ["d", "g", "s"], 1),
+    "PJF": ("J", ["d", "g", "s"], 1),
+    "VDMOS": ("M", ["d", "g", "s"], 1),
+}
+
+# N-polarity bias points (label, terminal voltages in _PRIMITIVES order,
+# series resistance per terminal); P-polarity devices use the negation. Each
+# family has one low-resistance "high-current" point: behind _RSERIES the
+# current is set by the bench resistor and ohmic params (RS, RB, RD, ...) are
+# invisible (a 15% RS error moved a diode's current by <1e-5 relative).
+_BIASES = {
+    "D": [("fwd-low", [0.7, 0.0], _RSERIES), ("fwd-high", [5.0, 0.0], _RSERIES),
+          ("rev", [-5.0, 0.0], _RSERIES), ("high-current", [2.0, 0.0], 1.0)],
+    "BJT": [("active", [5.0, 0.8, 0.0], _RSERIES), ("active-high", [5.0, 2.0, 0.0], _RSERIES),
+            ("saturated", [0.3, 2.0, 0.0], _RSERIES), ("off", [5.0, 0.0, 0.0], _RSERIES),
+            ("high-current", [5.0, 1.2, 0.0], 10.0)],
+    "MOS": [("on", [5.0, 3.0, 0.0, 0.0], _RSERIES), ("triode", [0.3, 5.0, 0.0, 0.0], _RSERIES),
+            ("off", [5.0, 0.0, 0.0, 0.0], _RSERIES), ("high-current", [5.0, 5.0, 0.0, 0.0], 10.0)],
+    "JF": [("on", [5.0, 0.0, 0.0], _RSERIES), ("pinching", [5.0, -1.0, 0.0], _RSERIES),
+           ("triode", [0.3, 0.0, 0.0], _RSERIES), ("high-current", [5.0, 0.0, 0.0], 10.0)],
+    "VDMOS": [("on", [10.0, 5.0, 0.0], _RSERIES), ("triode", [1.0, 10.0, 0.0], _RSERIES),
+              ("off", [10.0, 0.0, 0.0], _RSERIES), ("high-current", [10.0, 10.0, 0.0], 1.0)],
+}
+_FAMILY = {"D": "D", "NPN": "BJT", "PNP": "BJT", "NMOS": "MOS", "PMOS": "MOS",
+           "NJF": "JF", "PJF": "JF", "VDMOS": "VDMOS"}
+
+
+def _num(card: ir.ModelCard, key: str) -> Optional[float]:
+    from ..core.expr import parse_number
+    for k, v in card.params.items():
+        if k.lower() == key.lower():
+            try:
+                return parse_number(v.text)
+            except Exception:
+                return None
+    return None
+
+
+def _is_pchan_vdmos(text: str, name: str) -> bool:
+    """VDMOS polarity is a bare `pchan` flag; read it from the raw text."""
+    joined = re.sub(r"\n\s*\+", " ", text)
+    m = re.search(rf"^\s*\.model\s+{re.escape(name)}\s+vdmos\b(.*)$", joined, re.I | re.M)
+    return bool(m and re.search(r"\bpchan\b", m.group(1), re.I))
+
+
+Bias = Tuple[str, List[float], float]
+
+
+def _model_biases(card: ir.ModelCard, src_text: str) -> List[Bias]:
+    mtype = card.mtype.upper()
+    biases = list(_BIASES[_FAMILY[mtype]])
+    if mtype == "D":
+        bv = _num(card, "BV")
+        if bv and 0 < bv <= 1000:
+            biases.append(("breakdown", [-(1.2 * bv + 5.0), 0.0], _RSERIES))
+    neg = mtype in ("PNP", "PMOS", "PJF") or (
+        mtype == "VDMOS" and _is_pchan_vdmos(src_text, card.name))
+    if neg:
+        biases = [(lbl, [-v for v in vs], r) for lbl, vs, r in biases]
+    return biases
+
+
+def _model_bench(model_text: str, card: ir.ModelCard,
+                 biases: List[Bias]) -> Tuple[str, List[Tuple[str, str]]]:
+    """One deck: an isolated copy of the device per bias point.
+
+    Returns the deck and [(probe, human label)] pairs.
+    """
+    letter, terms, ac_i = _PRIMITIVES[card.mtype.upper()]
+    body = "\n".join(l for l in model_text.splitlines() if l.strip().lower() != ".end")
+    wrap = f"smv_{re.sub(r'[^a-z0-9_]', '_', card.name.lower())}"
+    lines = ["* SpiceMeister .model validation bench", "", body, "",
+             f".subckt {wrap} {' '.join(terms)}",
+             f"{letter}1 {' '.join(terms)} {card.name}",
+             ".ends", ""]
+    probes: List[Tuple[str, str]] = []
+    ac_lets: List[str] = []
+    for k, (label, volts, rser) in enumerate(biases):
+        nodes = []
+        for i, (term, v) in enumerate(zip(terms, volts)):
+            src = f"vb{k}t{i}"
+            ac = " AC 1" if i == ac_i else ""
+            lines.append(f"{src} sb{k}t{i} 0 DC {v}{ac}")
+            lines.append(f"rb{k}t{i} sb{k}t{i} nb{k}t{i} {rser}")
+            nodes.append(f"nb{k}t{i}")
+            where = f"{card.name}@{label} {term}"
+            probes.append((f"i({src})", f"{where} I(dc)"))
+            ac_lets.append(f"let acre_{src} = real(i({src}))")
+            ac_lets.append(f"let acim_{src} = imag(i({src}))")
+            probes.append((f"acre_{src}", f"{where} I(ac re)"))
+            probes.append((f"acim_{src}", f"{where} I(ac im)"))
+        lines.append(f"x{k} {' '.join(nodes)} {wrap}")
+    lines += ["", ".control", "op"]
+    lines += [f"print {p}" for p, _ in probes if p.startswith("i(")]
+    lines += [f"ac lin 1 {_AC_FREQ} {_AC_FREQ}"] + ac_lets
+    lines += [f"print {p}" for p, _ in probes if p.startswith("ac")]
+    lines += [".endc", ".end"]
+    return "\n".join(lines), probes
+
+
+def _validate_models(source_text: str, translated_text: str, source_dialect: str,
+                     translated_profile: str, ports: Dict[str, float],
+                     abs_tol: float, rel_tol: float,
+                     timeout: float) -> Optional[ValidationResult]:
+    """Bench every bare semiconductor `.model`; None if there is none to bench."""
+    try:
+        tr_models = [m for m in readers.read(translated_text, dialect="spice3").cards
+                     if isinstance(m, ir.ModelCard)]
+    except Exception:
+        return None
+    benchable = [m for m in tr_models if m.mtype.upper() in _PRIMITIVES]
+    if not benchable:
+        return None
+    try:
+        src_by_name = {m.name.lower(): m for m in
+                       readers.read(source_text, dialect=source_dialect).cards
+                       if isinstance(m, ir.ModelCard)}
+    except Exception:
+        src_by_name = {}
+
+    mode_t = _MODE.get(translated_profile, "ltpsa")
+    mode_s = _MODE.get(source_dialect, "")
+    res = ValidationResult(status="", mode_source=mode_s or "(default)",
+                           mode_translated=mode_t or "(default)")
+    skipped = [f"{m.name} ({m.mtype})" for m in tr_models if m not in benchable]
+    if skipped:
+        res.messages.append(f"model type not benchable, not compared: {', '.join(skipped)}")
+
+    lports = {k.lower(): v for k, v in ports.items()}
+    statuses: List[str] = []
+    max_abs = max_rel = 0.0
+    material = 0
+    worst_fail = None
+    worst_rel = 0.0
+    for card in benchable:
+        res.models.append(card.name)
+        src_card = src_by_name.get(card.name.lower())
+        if src_card is None:
+            statuses.append("not-verified")
+            res.messages.append(f"{card.name}: no .model of that name in the source — "
+                                "not compared")
+            continue
+        if src_card.mtype.upper() != card.mtype.upper():
+            statuses.append("fail")
+            res.messages.append(f"{card.name}: device type changed "
+                                f"{src_card.mtype} -> {card.mtype}")
+            continue
+        _, terms, _ = _PRIMITIVES[card.mtype.upper()]
+        if any(t in lports for t in terms):
+            defaults = _model_biases(src_card, source_text)[0][1]
+            biases = [("ports", [lports.get(t, d) for t, d in zip(terms, defaults)], _RSERIES)]
+        else:
+            biases = _model_biases(src_card, source_text)
+
+        deck_t, probes = _model_bench(translated_text, card, biases)
+        tr = _run_ngspice(deck_t, mode_t, timeout)
+        if not tr.ok:
+            statuses.append("error")
+            res.messages.append(f"{card.name}: translated model failed to simulate: "
+                                f"{tr.error}")
+            res.translated_run = tr
+            continue
+        deck_s, _ = _model_bench(source_text, src_card, biases)
+        sr = _run_ngspice(deck_s, mode_s, timeout)
+        if not sr.ok:
+            statuses.append("not-verified")
+            res.messages.append(f"{card.name}: source not natively simulable under "
+                                f"ngbehavior={mode_s or 'default'} ({sr.error}) — "
+                                "translation simulates but equivalence NOT checked")
+            res.source_run = sr
+            continue
+
+        exercised = False
+        model_failed = False
+        for probe, label in probes:
+            if probe not in sr.probes or probe not in tr.probes:
+                res.messages.append(f"{label}: absent from one run — not compared")
+                continue
+            a, b = sr.probes[probe], tr.probes[probe]
+            da = abs(a - b)
+            signal = max(abs(a), abs(b))
+            noise = max(_FLOOR_I, abs_tol)
+            if signal <= noise:
+                if da > noise:
+                    model_failed = True
+                    res.deviations.append((label, a, b, da))
+                    worst_fail = worst_fail or (label, a, b, da)
+                continue
+            exercised = True
+            material += 1
+            dr = da / signal
+            max_abs, max_rel = max(max_abs, da), max(max_rel, dr)
+            if dr > rel_tol:
+                model_failed = True
+                res.deviations.append((label, a, b, da))
+                if dr > worst_rel:
+                    worst_rel, worst_fail = dr, (label, a, b, da)
+        if model_failed:
+            statuses.append("fail")
+        elif exercised:
+            statuses.append("pass")
+            res.messages.append(f"{card.name}: {len(biases)} bias point(s) "
+                                f"[{', '.join(b[0] for b in biases)}], DC + AC @ {_AC_FREQ} "
+                                "agree")
+        else:
+            statuses.append("inconclusive")
+            res.messages.append(f"{card.name}: no material current at any bias point")
+
+    res.max_abs, res.max_rel, res.compared = max_abs, max_rel, material
+    for s in ("error", "fail", "not-verified", "inconclusive"):
+        if s in statuses:
+            res.status = s
+            break
+    else:
+        res.status = "pass"
+    if res.status == "fail" and worst_fail is not None:
+        n, a, b, _ = worst_fail
+        res.messages.append(f"worst divergence at {n}: source={a:.6g} translated={b:.6g}")
+    if res.status == "inconclusive":
+        res.messages.append("supply --ports with the device's terminal names "
+                            "to choose a bias")
+    return res
+
+
 def validate(source_text: str, translated_text: str, source_dialect: str = "auto",
              translated_profile: str = "ltspice", ports: Optional[Dict[str, float]] = None,
              abs_tol: float = 1e-9, rel_tol: float = 1e-4,
@@ -232,13 +489,18 @@ def validate(source_text: str, translated_text: str, source_dialect: str = "auto
 
     sub = _first_subckt(translated_text, "spice3")
     if sub is None:
+        model_res = _validate_models(source_text, translated_text, source_dialect,
+                                     translated_profile, ports, abs_tol, rel_tol, timeout)
+        if model_res is not None:
+            return model_res
         dummy = (translated_text + "\nV_smoke n_smoke 0 1\nR_smoke n_smoke 0 1\n"
                  ".control\nop\nprint v(n_smoke)\n.endc\n.end\n")
         mode_t = _MODE.get(translated_profile, "ltpsa")
         tr = _run_ngspice(dummy, mode_t, timeout)
         res = ValidationResult("not-verified" if tr.ok else "error",
                                mode_translated=mode_t, translated_run=tr)
-        res.messages.append("no .subckt found; ran a load/parse check on the translation only "
+        res.messages.append("no .subckt and no benchable .model (D/NPN/PNP/NMOS/PMOS/NJF/PJF/"
+                            "VDMOS) found; ran a load/parse check on the translation only "
                             "(no equivalence established)")
         if not tr.ok:
             res.messages.append(f"translation failed to load: {tr.error}")

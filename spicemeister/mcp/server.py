@@ -80,7 +80,8 @@ def _t_validate(args):
     res = V.validate(src, tr, source_dialect=args.get("from", "auto"),
                      translated_profile=args.get("profile", "ltspice"),
                      ports=ports, timeout=args.get("timeout", 60.0))
-    lines = [f"subckt: {res.subckt}", f"result: {res.summary()}",
+    target = f"models: {', '.join(res.models)}" if res.models else f"subckt: {res.subckt}"
+    lines = [target, f"result: {res.summary()}",
              f"ngbehavior source={res.mode_source} translated={res.mode_translated}"]
     for name, a, b, da in res.deviations:
         lines.append(f"  {name}: src={a:.6g} tr={b:.6g} |d|={da:.3g}")
