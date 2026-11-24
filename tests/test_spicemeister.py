@@ -385,6 +385,58 @@ class TestFableRegressionsNgspice(unittest.TestCase):
         self.assertTrue(any("match no terminal" in m for m in res.messages), res.messages)
 
 
+@unittest.skipUnless(V.ngspice_available(), "ngspice not on PATH")
+class TestBareModelValidation(unittest.TestCase):
+    DIODE = (".MODEL 1N4148W D  ( IS=10.4n RS=51.5m BV=75.0 IBV=1.00u\n"
+             "+ CJO=2.00p  M=0.333 N=2.07 TT=5.76n )\n")
+
+    def test_diode_model_passes(self):
+        tr = pipeline.translate(self.DIODE, from_dialect="spice3").output
+        res = V.validate(self.DIODE, tr, "spice3", "ltspice")
+        self.assertEqual(res.status, "pass", (res.summary(), res.messages))
+        self.assertEqual(res.models, ["1N4148W"])
+        self.assertTrue(res.ok_exit)
+
+    def test_diode_param_errors_fail(self):
+        # static (IS, BV), ohmic (RS) and dynamic (CJO, TT) params each matter
+        tr = pipeline.translate(self.DIODE, from_dialect="spice3").output
+        for old, new in [("IS=10.4n", "IS=11n"), ("BV=75.0", "BV=70"),
+                         ("RS=51.5m", "RS=60m"), ("CJO=2.00p", "CJO=2.20p"),
+                         ("TT=5.76n", "TT=6.5n")]:
+            bad = tr.replace(old, new)
+            self.assertNotEqual(bad, tr, old)
+            res = V.validate(self.DIODE, bad, "spice3", "ltspice")
+            self.assertEqual(res.status, "fail", f"{old}->{new}: {res.summary()}")
+
+    def test_p_polarity_devices_pass(self):
+        for src in (".model Q PNP(IS=1.41f BF=180.7 CJE=8p TF=500p)\n",
+                    ".model MP PMOS(level=1 VTO=-0.7 KP=50u CGSO=1n)\n",
+                    ".model J PJF(Beta=0.5m Vto=-2 Cgs=5p)\n"):
+            tr = pipeline.translate(src, from_dialect="spice3").output
+            res = V.validate(src, tr, "spice3", "ltspice")
+            self.assertEqual(res.status, "pass", f"{src}: {res.summary()} {res.messages}")
+
+    def test_dropped_vdmos_pchan_flag_fails(self):
+        src = ".model MV VDMOS(pchan Rd=10m Rs=5m Vto=-3 Kp=20 Cgs=2n)\n"
+        bad = ".model MV VDMOS(Rd=10m Rs=5m Vto=-3 Kp=20 Cgs=2n)\n"
+        self.assertEqual(V.validate(src, src, "spice3", "ltspice").status, "pass")
+        self.assertEqual(V.validate(src, bad, "spice3", "ltspice").status, "fail")
+
+    def test_translation_keeps_vdmos_pchan(self):
+        src = ".model MV VDMOS(pchan Rd=10m Rs=5m Vto=-3 Kp=20 Cgs=2n)\n"
+        for dialect in ("spice3", "pspice", "hspice"):
+            tr = pipeline.translate(src, from_dialect=dialect, banner=False).output
+            self.assertRegex(tr, r"VDMOS\(pchan\b", dialect)
+            res = V.validate(src, tr, "spice3", "ltspice")
+            self.assertEqual(res.status, "pass", f"{dialect}: {res.summary()}")
+
+    def test_unbenchable_model_is_not_verified(self):
+        src = ".model RMOD R(TC1=1m)\n"
+        res = V.validate(src, src, "spice3", "ltspice")
+        self.assertEqual(res.status, "not-verified", res.summary())
+        self.assertFalse(res.ok_exit)
+
+
 class TestMCP(unittest.TestCase):
     def test_roundtrip(self):
         import io

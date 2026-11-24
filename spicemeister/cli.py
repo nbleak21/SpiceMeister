@@ -106,7 +106,10 @@ def cmd_validate(args) -> int:
         ports=_parse_ports(args.ports), abs_tol=args.abs_tol, rel_tol=args.rel_tol,
         timeout=args.timeout,
     )
-    print(f"subckt:      {res.subckt or '(none)'}")
+    if res.models:
+        print(f"models:      {', '.join(res.models)}")
+    else:
+        print(f"subckt:      {res.subckt or '(none)'}")
     print(f"source mode: ngbehavior={res.mode_source}")
     print(f"target mode: ngbehavior={res.mode_translated}")
     print(f"result:      {res.summary()}")
