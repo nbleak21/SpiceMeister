@@ -147,6 +147,9 @@ class ModelCard(Card):
     name: str = ""
     mtype: str = ""            # D, NPN, PNP, NMOS, PMOS, VDMOS, R, C, SW, ...
     params: "OrderedDict[str, Expr]" = field(default_factory=OrderedDict)
+    # bare valueless flags, verbatim and in order (e.g. VDMOS `pchan`); dropping
+    # one silently changes the device (pchan -> N-channel)
+    flags: List[str] = field(default_factory=list)
 
     def iter_exprs(self) -> List[Expr]:
         return list(self.params.values())

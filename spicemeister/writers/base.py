@@ -185,15 +185,15 @@ class Writer:
         return [indent + ln for ln in lines]
 
     def _model(self, card: ir.ModelCard, indent: str) -> List[str]:
-        params = " ".join(f"{k}={v.render()}" for k, v in card.params.items())
+        items = list(card.flags) + [f"{k}={v.render()}" for k, v in card.params.items()]
+        params = " ".join(items)
         head = f"{_kw(self.profile, '.model')} {card.name} {card.mtype}"
-        toks = [head, "(" + params + ")"] if params else [head, "()"]
         # keep ".model NAME TYPE(" on one token group; wrap params if long
         single = f"{head}({params})"
         if len(indent) + len(single) <= _WIDTH:
             lines = [single]
         else:
-            lines = _wrap([head + "("] + [f"{k}={v.render()}" for k, v in card.params.items()])
+            lines = _wrap([head + "("] + items)
             lines.append("+ )")
         if card.comment:
             lines[-1] += " ; " + card.comment

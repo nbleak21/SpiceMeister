@@ -268,9 +268,11 @@ class BaseReader:
             body = body[1:]
         if body.endswith(")"):
             body = body[:-1]
-        params = parse_kv(merge_eq(split_fields(body)))
+        toks = merge_eq(split_fields(body))
+        params = parse_kv(toks)
+        flags = [t for t in toks if "=" not in t and re.fullmatch(r"[A-Za-z_]\w*", t)]
         return ir.ModelCard(lineno=ll.no, name=name, mtype=mtype,
-                            params=params, comment=ll.comment)
+                            params=params, flags=flags, comment=ll.comment)
 
     def _parse_func(self, ll: LLine, rest: str) -> ir.Card:
         # .func name(a,b) {body}  |  .func name(a,b)=body  |  .func name(a,b) body
